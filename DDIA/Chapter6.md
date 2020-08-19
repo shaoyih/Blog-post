@@ -133,9 +133,83 @@ Voldmort: https://www.project-voldemort.com/voldemort/rebalance.html
 
 
 
-#### 最低要求
+#### Rebalance时需要达到的最低要求
 
-1. 的的确确
+1. 的的确确rebalance了
+2. rebalance 的 同时 系统并不会停止，继续支持读写
+3. 尽可能地减小IO，不去move那些不必要的数据
+
+
+
+#### Not to do
+
+1. hash val Mod by N()
+
+主要原因是parition增加或者减少的时候 这个value就不准确了
+
+但是可以用consistent hash
+
+
+
+### 策略
+
+1. fixed number partition
+
+   - 提前预设好paritition的数量
+   - rebalance的时候是整个parition进行move
+   - rebalance后数据也不会移到当前以外的parition
+   - 但问题是这种选项要选一个合适的 number 才行不然太大的话 消耗会更大， 太小了就会有很多overhead。
+
+2. 动态分配
+
+   1. 多于configured size 就分裂，少于某个阈值就合并。
+   2. 和 bTree 很像
+
+   好处->parition的数量和总的dataset成比
+
+3. node数分配
+
+   - 由node多少来决定parition数量
+
+之后细致研究
+
+
+
+### 自动 手动 对比
+
+因为rebalance 本身就是一个很贵的操作 trade off在这里无非就是 方便 vs 安全
+
+
+
+## Request routing
+
+routing 是在partion中很重要的一环， 因为client本身需要知道数据在哪一个parition里， 所以就有了三层routing法则
+
+1. client 发给node 让node自己routing
+2. client自己routing
+3. 加个中间层routing
+
+
+
+### 两种策略解决 一致性问题
+
+1. **serperate cordination service** 
+
+   有这个服务来记录meta data找到对应parition的对应mapping， 没当发生改变类似zookeeper会通知 routing层面
+
+2. **gossip protocol**
+
+   散播改变的消息
+
+### parallel Query Excution
+
+俗称 massively parallel processing之后会讲 第十章dive deep吧。
+
+
+
+## 总结
+
+这章大概讲了一下parition的方式和策略，总体来讲也是 parition的不同选择和trade off，虽然作者讲的不多但是内容的颗粒程度是非常小的，这章如果有时间需要好好研究一下。
 
 
 
